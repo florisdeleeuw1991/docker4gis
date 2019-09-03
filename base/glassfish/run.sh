@@ -6,24 +6,23 @@ admin_port="${2:-4848}"
 shift 2
 
 DOCKER_REGISTRY="${DOCKER_REGISTRY}"
-DOCKER_USER="${DOCKER_USER:-docker4gis}"
-DOCKER_REPO="${DOCKER_REPO:-api}"
-DOCKER_TAG="${DOCKER_TAG:-latest}"
-CONTAINER="${CONTAINER:-$DOCKER_USER-$DOCKER_REPO}"
-NETWORK_NAME="${NETWORK_NAME:-$DOCKER_USER-net}"
+DOCKER_USER="${DOCKER_USER}"
+DOCKER_TAG="${DOCKER_TAG}"
+DOCKER_ENV="${DOCKER_ENV}"
+DOCKER_BINDS_DIR="${DOCKER_BINDS_DIR}"
 
-IMAGE="${DOCKER_REGISTRY}${DOCKER_USER}/${DOCKER_REPO}:${DOCKER_TAG}"
+repo=$(basename "$0")
+container="${DOCKER_USER}-${repo}"
+image="${DOCKER_REGISTRY}${DOCKER_USER}/${repo}:${DOCKER_TAG}"
 
-echo; echo "Running $CONTAINER from $IMAGE"
-HERE=$(dirname "$0")
-if ("$HERE/../rename.sh" "$IMAGE" "$CONTAINER"); then
-	"$HERE/../network.sh"
-	docker volume create "${CONTAINER}"
-	docker run --name $CONTAINER \
-		--network "$NETWORK_NAME" \
-		--mount source="${CONTAINER}",target=/host \
-		-p "${app_port}":8080 \
-		-p "${admin_port}":4848 \
-		"$@" \
-		-d $IMAGE
-fi
+if .run/start.sh "${image}" "${container}"; then exit; fi
+
+docker volume create "${container}"
+docker run --name "${container}" \
+	--network "${DOCKER_USER}-net" \
+	--mount source="${container}",target=/host \
+	-v $DOCKER_BINDS_DIR/fileport:/fileport \
+	-p "${app_port}":8080 \
+	-p "${admin_port}":4848 \
+	"$@" \
+	-d "${image}"

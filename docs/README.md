@@ -47,6 +47,7 @@ A development environment requires:
 - A code oriented text editor (Atom, Sublime Text, Visual Studio Code, or maybe you're a fan of vi or Emacs, anything like these would work).
 
 On Windows, Docker requires Windows 10 Professional or Enterprise (the Home edition won't work), and you need 16 GB of RAM. If this poses any hurdles, take a look at our guide for setting up a [Cloud development environment](clouddevenv.md).
+Also, on Windows, make sure you get LF line endings, instead of CRLF; issuing `git config --global core.autocrlf false` before cloning the repo should do the trick.
 
 ### Fork
 
@@ -68,13 +69,13 @@ Then, use your _main script_ to build things, eg `./app build proxy` to build yo
 
 ## Running things
 
-When you've built all your images _and_ the `run` image, `./app run` will run your app. That is, it'll run the `latest` version of it; see the [run image](run.md) docs for details about versioning, and how to build the run image.
+When you've built all your images, create a runnable package with `./app package`, then `./app run` will run your app. That is, it'll run the `latest` version of it; see the [package](package.md) docs for details about versioning.
 
-Where `./app run` creates containers from images, `./app stop` will stop all the app's containers, and `./app start` will start existing (stopped) containers.
+Where `./app run` creates containers from images (start existing containers), `./app stop` will stop all the app's containers.
 
-When you're happy about an image, you can `docker image push` it to a Docker registry. This can be the Docker Hub, or any other public or private registry. The docker4gis `registry` base image facilitates setting up a private registry.
+When you're happy about your changes, save a version to the Docker registry with `./app package {tag}`. This can be the Docker Hub, or any other public or private registry. The docker4gis `registry` base image facilitates setting up a private registry.
 
-Once your images are in a registry, they're accessible there from your servers. On a server, the images are never built, only run. So the only thing you need there, is the little run script that runs the run image. See its [docs](run.md) for details.
+Once your images are in a registry, they're accessible there from your servers. On a server, the images are never built, only run. So the only thing you need there, is the little run script that runs the package. See its [docs](package.md) for details.
 
 ## Base images 
 
@@ -83,6 +84,7 @@ Once your images are in a registry, they're accessible there from your servers. 
 - gdal
 - geoserver
 - glassfish
+- tomcat (build from maven)
 - mapfish
 - postfix
 - [postgis](postgis.md)
@@ -99,4 +101,4 @@ Once your images are in a registry, they're accessible there from your servers. 
 
 *) fork & merkatorgis:
 - If you fix, extend, or otherwise improve things, please create a pull request, so that it can be merged into the originating merkatorgis/docker4gis repository.
-- When you want to update your fork with new "upstream" changes from merkatorgis/docker4gis, create a pull request as well, but then switch the left and right repositories so that the arrow points from merkatorgis/docker4gis towards your fork. You might need to temporarily select a third party's fork on one side to get to that setup.
+- When you want to update your fork with new "upstream" changes from merkatorgis/docker4gis, use the `compare` function on GitHub: https://github.com/${your_account}/docker4gis/compare/master...merkatorgis:master

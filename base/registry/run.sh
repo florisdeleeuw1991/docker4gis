@@ -4,27 +4,30 @@ export MSYS_NO_PATHCONV=1
 
 REGISTRY_HOST="${REGISTRY_HOST:-localhost}"
 REGISTRY_PORT="${REGISTRY_PORT:-443}"
+
 DOCKER_REGISTRY="${DOCKER_REGISTRY}"
-DOCKER_USER="${DOCKER_USER:-docker4gis}"
-DOCKER_REPO="${DOCKER_REPO:-registry}"
-DOCKER_TAG="${DOCKER_TAG:-latest}"
+DOCKER_USER="${DOCKER_USER}"
+DOCKER_TAG="${DOCKER_TAG}"
+DOCKER_ENV="${DOCKER_ENV}"
+DOCKER_BINDS_DIR="${DOCKER_BINDS_DIR}"
 
-CONTAINER="$DOCKER_REPO"
-IMAGE="${DOCKER_REGISTRY}${DOCKER_USER}/${DOCKER_REPO}:${DOCKER_TAG}"
+repo=$(basename "$0")
+container="${DOCKER_USER}-${repo}"
+image="${DOCKER_REGISTRY}${DOCKER_USER}/${repo}:${DOCKER_TAG}"
 
-echo; echo "Running $CONTAINER from $IMAGE"
+if .run/start.sh "${image}" "${container}"; then exit; fi
 
 docker volume create certificates
 docker volume create registry
 if (docker network create registry 2>/dev/null); then true; fi
 
-docker container run --name $CONTAINER \
+docker container run --name $container \
 	--network registry \
 	-v certificates:/certificates \
 	-e REGISTRY_HOST=$REGISTRY_HOST \
 	-p $REGISTRY_PORT:443 \
 	"$@" \
-	-d "$IMAGE"
+	-d "$image"
 
 docker container run --name theregistry \
 	--network registry \

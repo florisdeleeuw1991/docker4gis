@@ -1,25 +1,33 @@
 #!/bin/bash
 set -e
 
-POSTFIX_PORT="${POSTFIX_PORT:-25}"
 DOCKER_REGISTRY="${DOCKER_REGISTRY}"
-DOCKER_USER="${DOCKER_USER:-docker4gis}"
-DOCKER_REPO="${DOCKER_REPO:-postfix}"
-DOCKER_TAG="${DOCKER_TAG:-latest}"
-DOCKER_BINDS_DIR="${DOCKER_BINDS_DIR:-d:/Docker/binds}"
-POSTFIX_CONTAINER="${POSTFIX_CONTAINER:-$DOCKER_USER-pf}"
+DOCKER_USER="${DOCKER_USER}"
+DOCKER_TAG="${DOCKER_TAG}"
+DOCKER_ENV="${DOCKER_ENV}"
+DOCKER_BINDS_DIR="${DOCKER_BINDS_DIR}"
 
-IMAGE="${DOCKER_REGISTRY}${DOCKER_USER}/${DOCKER_REPO}:${DOCKER_TAG}"
+repo=$(basename "$0")
+container="${DOCKER_USER}-${repo}"
+image="${DOCKER_REGISTRY}${DOCKER_USER}/${repo}:${DOCKER_TAG}"
+
+POSTFIX_PORT="${POSTFIX_PORT:-25}"
+POSTFIX_DESTINATION="${POSTFIX_DESTINATION}"
+
+if .run/start.sh "${image}" "${container}"; then exit; fi
 
 mkdir -p "${DOCKER_BINDS_DIR}/fileport"
 mkdir -p "${DOCKER_BINDS_DIR}/runner"
 
-echo; echo "Running $POSTFIX_CONTAINER from $IMAGE"
-HERE=$(dirname "$0")
-if ("$HERE/../rename.sh" "$IMAGE" "$POSTFIX_CONTAINER"); then
-	docker run --name $POSTFIX_CONTAINER \
-		-v $DOCKER_BINDS_DIR/fileport:/fileport \
-		-v $DOCKER_BINDS_DIR/runner:/util/runner/log \
-		-p $POSTFIX_PORT:25 \
-		-d $IMAGE
+destination=
+if [ "${POSTFIX_DESTINATION}" != '' ]; then
+	destination="-e DESTINATION=${POSTFIX_DESTINATION}"
 fi
+
+docker run --name $container \
+	-v $DOCKER_BINDS_DIR/fileport:/fileport \
+	-v $DOCKER_BINDS_DIR/runner:/util/runner/log \
+	-p $POSTFIX_PORT:25 \
+		${destination} \
+	--network "${DOCKER_USER}-net" \
+	-d $image
